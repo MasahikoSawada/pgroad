@@ -1,0 +1,5 @@
+# road_am extension
+comment = 'Table AM for Read-Only Archived Data'
+default_version = '1.0'
+module_pathname = '$libdir/road_am'
+relocatable = true
