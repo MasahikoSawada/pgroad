@@ -1,15 +1,16 @@
-# road_am Makefile
+# pgroad Makefile
 
-MODULE_big = road_am
+MODULE_big = pgroad
 OBJS = \
-	road_am.o
+	road_am.o \
+	skiplist_table.o
 
-PGFILEDESC = "road_am -- Table AM for Read-Only Archived Data"
+PGFILEDESC = "pgroad -- Table AM for Read-Only Archived Data"
 
-EXTENSION = road_am
-DATA = road_am--1.0.sql
+EXTENSION = pgroad
+DATA = pgroad--1.0.sql
 
-REGRESS = road_am
+REGRESS = pgroad
 
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
