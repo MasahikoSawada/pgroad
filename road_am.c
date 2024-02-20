@@ -226,13 +226,6 @@ _PG_init(void)
 	prev_ProcessUtility = ProcessUtility_hook ?
 		ProcessUtility_hook : standard_ProcessUtility;
 	ProcessUtility_hook = road_ProcessUtility;
-
-    /*
-     * In order to create our own custom resource manager, we have to be
-     * loaded via shared_preload_libraries. Otherwise, registration will fail.
-     */
-    RegisterCustomRmgr(RM_ROADAM_ID, &roadam_rmgr);
-
 }
 
 /* Reset all fields of RoadInsertStateData */
