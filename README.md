@@ -98,9 +98,15 @@ ALTER TABLE
 
 The `pgbench_accounts` table is compressed to 86MB from 1.2GB.
 
-## Scan support
+## Supported Features
 
-The ROAD table AM now support only Seq Scan and Index Scan.
+- Seq scans
+- Index scans
+- Index build (btree and hash)
+- Crash recovery
+- TOAST
+- Data compression by pglz and lz4
+- Detach and attach table (WIP)
 
 ## Installation
 
