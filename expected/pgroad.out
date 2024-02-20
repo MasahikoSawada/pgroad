@@ -1,0 +1,101 @@
+create extension pgroad;
+-- prepare a heap table.
+create table tab1 (id int primary key, data text) using heap;
+insert into tab1 select i, md5(i::text) from generate_series(1, 10000) i;
+-- create a road table from tab1 (heap).
+create table tab2 using road as select * from tab1;
+create index on tab2 (id);
+-- convert the heap table into a road table.
+alter table tab1 set access method road;
+-- create a road table from another road table.
+create table tab3 using road as select * from tab1;
+create index on tab3 (id, data);
+select relname, amname from pg_class c join pg_am a on c.relam = a.oid where relname in ('tab1', 'tab2', 'tab3') order by 1;
+ relname | amname 
+---------+--------
+ tab1    | road
+ tab2    | road
+ tab3    | road
+(3 rows)
+
+-- SeqScan test. All queries must produce the same results.
+set enable_seqscan to on;
+set enable_indexscan to off;
+explain select min(id), max(id), count(id) from tab1;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Aggregate  (cost=0.01..0.02 rows=1 width=16)
+   ->  Seq Scan on tab1  (cost=0.00..0.00 rows=1 width=4)
+(2 rows)
+
+select min(id), max(id), count(id) from tab1;
+ min |  max  | count 
+-----+-------+-------
+   1 | 10000 | 10000
+(1 row)
+
+select min(id), max(id), count(id) from tab2;
+ min |  max  | count 
+-----+-------+-------
+   1 | 10000 | 10000
+(1 row)
+
+select min(id), max(id), count(id) from tab3;
+ min |  max  | count 
+-----+-------+-------
+   1 | 10000 | 10000
+(1 row)
+
+-- IndexScan test. Again, all queries must produce the same
+-- results.
+set enable_seqscan to off;
+set enable_indexscan to on;
+explain select id from tab1 where id < 5 or id > 9995 order by 1;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Index Only Scan using tab1_pkey on tab1  (cost=0.25..8.27 rows=1 width=4)
+   Filter: ((id < 5) OR (id > 9995))
+(2 rows)
+
+select id from tab1 where id < 5 or id > 9995 order by 1;
+  id   
+-------
+     1
+     2
+     3
+     4
+  9996
+  9997
+  9998
+  9999
+ 10000
+(9 rows)
+
+select id from tab2 where id < 5 or id > 9995 order by 1;
+  id   
+-------
+     1
+     2
+     3
+     4
+  9996
+  9997
+  9998
+  9999
+ 10000
+(9 rows)
+
+select id from tab3 where id < 5 or id > 9995 order by 1;
+  id   
+-------
+     1
+     2
+     3
+     4
+  9996
+  9997
+  9998
+  9999
+ 10000
+(9 rows)
+
