@@ -116,9 +116,10 @@ skiplist_create_for_rel(Relation rel)
 				toastobject;
 	TupleDesc	tupdesc;
 	IndexInfo  *indexInfo;
-	Oid			collationIds[2];
-	Oid			opclassIds[2];
-	int16		coloptions[2];
+	Oid			collationIds[1];
+	Oid			opclassIds[1];
+	int16		coloptions[1];
+	NullableDatum	stattargets[1];
 
 	ROAD_DEBUG_LOG("create skiplist table for rel %u", RelationGetRelid(rel));
 
@@ -204,14 +205,30 @@ skiplist_create_for_rel(Relation rel)
 
 	coloptions[0] = 0;
 
-	skip_idxoid = index_create(skip_rel, skip_idxname, InvalidOid, InvalidOid,
-							   InvalidOid, InvalidOid,
+	stattargets[0].value = 0;
+	stattargets[0].isnull = false;
+
+	skip_idxoid = index_create(skip_rel,
+							   skip_idxname,
+							   InvalidOid,	/* indexRelationId */
+							   InvalidOid,	/* parentIndexRelid */
+							   InvalidOid,	/* parentConstraintId */
+							   InvalidRelFileNumber,	/* relFileNumber */
 							   indexInfo,
 							   list_make1("skiplist_first_rownum"),
 							   BTREE_AM_OID,
 							   rel->rd_rel->reltablespace,
-							   collationIds, opclassIds, NULL, coloptions, (Datum) 0,
-							   INDEX_CREATE_IS_PRIMARY, 0, true, true, NULL);
+							   collationIds,
+							   opclassIds,
+							   NULL,	/* opclassOptions */
+							   coloptions,
+							   stattargets,
+							   (Datum) 0,	/* reloptions */
+							   INDEX_CREATE_IS_PRIMARY,
+							   0,
+							   false,	/* allow_system_table_mods */
+							   true,	/* is_internal */
+							   NULL);
 
 	table_close(skip_rel, NoLock);
 

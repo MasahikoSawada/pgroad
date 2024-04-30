@@ -708,7 +708,6 @@ road_write_data(Relation rel, Buffer metabuffer, Buffer *buffers, int nbuffers,
 	{
 		Buffer	buffer = buffers[idx];
 		uint32	len;
-		Page	page;
 		Size	freespace;
 		PageHeader phdr;
 
@@ -1683,8 +1682,7 @@ road_copy_for_cluster(Relation OldTable, Relation NewTable,
 }
 
 static bool
-road_scan_analyze_next_block(TableScanDesc scan, BlockNumber blockno,
-							 BufferAccessStrategy bstrategy)
+road_scan_analyze_next_block(TableScanDesc scan, ReadStream *stream)
 {
 	return false;
 }
