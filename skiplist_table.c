@@ -119,7 +119,9 @@ skiplist_create_for_rel(Relation rel)
 	Oid			collationIds[1];
 	Oid			opclassIds[1];
 	int16		coloptions[1];
+#if PG_VERSION_NUM >= 170000
 	NullableDatum	stattargets[1];
+#endif
 
 	ROAD_DEBUG_LOG("create skiplist table for rel %u", RelationGetRelid(rel));
 
@@ -205,8 +207,10 @@ skiplist_create_for_rel(Relation rel)
 
 	coloptions[0] = 0;
 
+#if PG_VERSION_NUM >= 170000
 	stattargets[0].value = 0;
 	stattargets[0].isnull = false;
+#endif
 
 	skip_idxoid = index_create(skip_rel,
 							   skip_idxname,
@@ -220,9 +224,13 @@ skiplist_create_for_rel(Relation rel)
 							   rel->rd_rel->reltablespace,
 							   collationIds,
 							   opclassIds,
+#if PG_VERSION_NUM >= 170000
 							   NULL,	/* opclassOptions */
+#endif
 							   coloptions,
+#if PG_VERSION_NUM >= 170000
 							   stattargets,
+#endif
 							   (Datum) 0,	/* reloptions */
 							   INDEX_CREATE_IS_PRIMARY,
 							   0,

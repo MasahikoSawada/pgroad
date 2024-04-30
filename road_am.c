@@ -1681,8 +1681,14 @@ road_copy_for_cluster(Relation OldTable, Relation NewTable,
 	FEATURE_NOT_SUPPORTED();
 }
 
+#if	PG_VERSION_NUM >= 170000
 static bool
 road_scan_analyze_next_block(TableScanDesc scan, ReadStream *stream)
+#else
+static bool
+road_scan_analyze_next_block(TableScanDesc scan, BlockNumber blockno,
+							 BufferAccessStrategy bstrategy)
+#endif
 {
 	return false;
 }
