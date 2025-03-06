@@ -664,12 +664,12 @@ road_flush_insert_state(RoadInsertStateData * state)
 	char		tmp[ROAD_CHUNK_PAGE_SIZE] = {0};
 	int			len;
 
-	ROAD_DEBUG_LOG("FLUSH: start oid %u chunk page ntuples %u freespace %zu first_rownum %lu cur_rownum %lu",
+	ROAD_DEBUG_LOG("FLUSH: start oid %u chunk page ntuples %u freespace %zu first_rownum %llu cur_rownum %llu",
 				   state->relid,
 				   chunk_page_get_max_offsetnumber(state->chunk_page),
 				   chunk_page_free_space(state->chunk_page),
-				   state->first_rownum,
-				   state->cur_rownum);
+				   (long long) state->first_rownum,
+				   (long long) state->cur_rownum);
 
 	ROAD_DEBUG_LOG("FLUSH: step-1: start compress");
 	len = chunk_page_compress(state, state->chunk_page, (ChunkHeader) tmp);
@@ -680,9 +680,9 @@ road_flush_insert_state(RoadInsertStateData * state)
 	state->first_rownum = state->cur_rownum;
 	chunk_page_init((Page) state->chunk_page);
 
-	ROAD_DEBUG_LOG("FLUSH: step-3: finish, update the insert state next-first %lu next-cur %lu",
-				   state->first_rownum,
-				   state->cur_rownum);
+	ROAD_DEBUG_LOG("FLUSH: step-3: finish, update the insert state next-first %llu next-cur %llu",
+				   (long long) state->first_rownum,
+				   (long long) state->cur_rownum);
 }
 
 static void
@@ -1116,8 +1116,8 @@ road_get_chunk_page(RoadScanDesc scan)
 		LockBuffer(scan->curbuf, BUFFER_LOCK_SHARE);
 		scan->curpos = MAXALIGN(SizeOfPageHeaderData);
 
-		ROAD_DEBUG_LOG("SCAN: adjust ptr because of page end, curblk %u curpos %lu",
-					   scan->curblk, scan->curpos);
+		ROAD_DEBUG_LOG("SCAN: adjust ptr because of page end, curblk %u curpos %llu",
+					   scan->curblk, (long long) scan->curpos);
 	}
 
 	page = BufferGetPage(scan->curbuf);
@@ -1129,11 +1129,11 @@ road_get_chunk_page(RoadScanDesc scan)
 	cdata = (ChunkHeader) ((char *) page + scan->curpos);
 	scan->curpos += SizeOfChunkHeaderData;
 
-	ROAD_DEBUG_LOG("SCAN: get chunk c_len %u c_hole_len %u c_hole_off %u: read blk %u ptr %lu ptr+header %lu",
+	ROAD_DEBUG_LOG("SCAN: get chunk c_len %u c_hole_len %u c_hole_off %u: read blk %u ptr %llu ptr+header %lld",
 				   cdata->c_len, cdata->c_hole_len, cdata->c_hole_off,
 				   scan->curblk,
-				   scan->curpos - SizeOfChunkHeaderData,
-				   scan->curpos);
+				   (long long) scan->curpos - SizeOfChunkHeaderData,
+				   (long long) scan->curpos);
 
 	/* Read the compressed chunk page from (possibly multiple) pages */
 	road_read_chunk_page(scan->base.rs_rd, &scan->curbuf, &scan->curblk,
@@ -1172,7 +1172,7 @@ road_scan_getnextslot(TableScanDesc sscan, ScanDirection direction,
 		scan->compression_method = metap->compression_method;
 		UnlockReleaseBuffer(metabuffer);
 
-		ROAD_DEBUG_LOG("SCAN: started from blk %u pos %lu maxchunks %lu",
+		ROAD_DEBUG_LOG("SCAN: started from blk %u pos %lld maxchunks %lld",
 					   scan->curblk, scan->curpos, scan->maxchunk);
 	}
 	else
@@ -1218,8 +1218,8 @@ continue_chunk_page:
 			return true;
 		}
 
-		ROAD_DEBUG_LOG("SCAN: finished to scan on the %lu chunk (max chunk %lu)",
-					   scan->curchunk, scan->maxchunk);
+		ROAD_DEBUG_LOG("SCAN: finished to scan on the %llu chunk (max chunk %llu)",
+					   (long long) scan->curchunk, (long long) scan->maxchunk);
 
 		LockBuffer(scan->curbuf, BUFFER_LOCK_UNLOCK);
 		scan->curchunk++;
@@ -1362,8 +1362,10 @@ road_index_fetch_tuple(struct IndexFetchTableData *scan,
 		offset = skiplist_get_chunk_offset_for_rownum(rel, rownum,
 													  snapshot, &first_rownum);
 
-		ROAD_DEBUG_LOG("IDXSCAN: get offset %lu first_rownum %lu for rownum %lu",
-					   offset, first_rownum, rownum);
+		ROAD_DEBUG_LOG("IDXSCAN: get offset %llu first_rownum %llu for rownum %llu",
+					   (long long) offset,
+					   (long long) first_rownum,
+					   (long long) rownum);
 
 		blkno = offset / BLCKSZ;
 		blkoff = offset % BLCKSZ;
@@ -1487,8 +1489,8 @@ road_tuple_insert(Relation relation, TupleTableSlot *slot,
 	ItemPointerCopy(&tid, &slot->tts_tid);
 
 	if (rownum % 100 == 0)
-		ROAD_DEBUG_LOG("INSERT: oid %u inserted tuple with rownum %lu tid (%u,%u)",
-					   state->relid, rownum,
+		ROAD_DEBUG_LOG("INSERT: oid %u inserted tuple with rownum %llu tid (%u,%u)",
+					   state->relid, (long long) rownum,
 					   ItemPointerGetBlockNumber(&tuple->t_data->t_ctid),
 					   ItemPointerGetOffsetNumber(&tuple->t_data->t_ctid));
 
@@ -1899,14 +1901,16 @@ road_estimate_rel_size(Relation rel, int32 *attr_widths,
 
 static bool
 road_scan_bitmap_next_block(TableScanDesc scan,
-							TBMIterateResult *tbmres)
+							BlockNumber *blockno,
+							bool *recheck,
+							uint64 *lossy_pages,
+							uint64 *exact_pages)
 {
 	FEATURE_NOT_SUPPORTED();
 }
 
 static bool
 road_scan_bitmap_next_tuple(TableScanDesc scan,
-							TBMIterateResult *tbmres,
 							TupleTableSlot *slot)
 {
 	FEATURE_NOT_SUPPORTED();

@@ -292,8 +292,8 @@ skiplist_get_chunk_offset_for_rownum(Relation rel, RowNumber rownum,
 	tuple = systable_getnext_ordered(desc, BackwardScanDirection);
 
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "could not find skiplist table tuple for rownum %lu",
-			 rownum);
+		elog(ERROR, "could not find skiplist table tuple for rownum %llu",
+			 (long long) rownum);
 
 	heap_deform_tuple(tuple, RelationGetDescr(skip_rel), values, nulls);
 
