@@ -151,5 +151,4 @@ This variable sets the compression method for chunk pages. The supported compres
 - Detach and attach support
 - More regression tests
 - Use more compact tuple format for chunk page
-- Consider to use more compressable page format such ash PAX
 - More scan support (e.g. bitmap scan, tid scan)
